@@ -1,0 +1,10 @@
+*.so
+*.so.*
+*.mexglx
+*.mexa64
+*.mexw32
+*.exe
+*.dll
+*.lib
+unix32/bin/demo
+unix64/bin/demo

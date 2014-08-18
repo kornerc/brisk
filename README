@@ -1,0 +1,182 @@
++-----------------------------------------------------------------------+
+| BRISK package: Source Code Release v0.0                               |
+| Copyright 2011 Autonomous Systems Lab (ASL), ETH Zurich               |
+| Stefan Leutenegger, Simon Lynen and Margarita Chli                    |
+|                                                                       |
+| License: BSD (see license file included in this folder)               |
+|                                                                       |
+| This software is an implementation of [1]:                            |
+| [1] Stefan Leutenegger, Margarita Chli and Roland Siegwart, BRISK:    |
+|     Binary Robust Invariant Scalable Keypoints, in Proceedings of the |
+|     IEEE International Conference on Computer Vision (ICCV2011).      |
++-----------------------------------------------------------------------+
+
+
+This implementation provides a precompiled Matlab interface as well as a 
+demo application for standard system configurations. However, you can 
+also recompile any component, bearing in mind the dependency on OpenCV 
+(minimum Version 2.2).
+
+For questions, email brisk@ethz.ch
+
+Running the BRISK demo 
+----------------------
+
+To run the precompiled BRISK demo you first need to enter the right 
+sub-directory (that is "brisk/<architecture>/bin/"):
+> unix32 : 32-bit Linux, compiled and tested on Ubuntu 10.04
+> unix64 : 64-bit Linux, compiled and tested on Ubuntu 10.04
+> win32  : 32-bit, tested on Vista and 7
+
+In here, you can run the demo application. On Linux, you might have to 
+install some dependencies of OpenCV (avcodec, avformat, avutil, swscale, 
+dc1394)--or just install OpenCV.
+
+To use the Matlab interface, you need to run the "demo.m" script in
+"brisk/<architecture>/bin/" from Matlab. If you get error in concerning 
+stdc++ on linux, run the "fix_errors.m" script from the Matlab console 
+(inside the "brisk/Matlab/" directory). Important: you will have to 
+restart Matlab afterwards, otherwise the mex interface will still not 
+work. 
+
+You can try the BRISK demo with different images by replacing the ones in
+"brisk/images/". This should run for images of different dimensions, but 
+smaller than 16.7 Mpixels (grayscale).
+
+If the demo application does not work for your system, you might
+need to recompile the source code.
+
+
+Building the BRISK source
+--------------------------
+
+Note: minimum OpenCV requirement is Version 2.2. You can get this from
+http://opencv.willowgarage.com/wiki/
+
+To compile, type "make" while in the brisk root-directory (this triggers 
+an out-of-source build using cmake). The executable to run (called
+"demo") is copied into "brisk/<architecture>/bin/". Note that for Windows 
+or Apple OS, you need to enter the "brisk/build" directory and run 
+"cmake .." there.
+
+If you want to make changes on the BRISK library, you can generate an 
+eclipse project running "make cdt" in the brisk root directory. On 
+Windows cmake was tested to generate a VisualStudio project.
+
+
+Building the Matlab Interface
+----------------------------- 
+
+In order to rebuild the Matlab mex-files, type "make_mex" in the Matlab 
+console, while inside the "brisk/Matlab/" directory. You will have to 
+adapt the respective path to openCV inside make_mex.m.
+
+
+USING THE MATLAB INTERFACE
+==========================
+
+This is a MEX interface to the BRISK C++ library: it detects, extracts 
+and matches BRISK features Implementation according to [1].
+
+Change to the corresponding /bin directory inside Matlab (i.e. 
+$BRISK_ROOT/yourarchitecture/bin). Run the "demo" script to check if the 
+mex interface is working. If you get error concerning stdc++, run 
+"fix_errors" from the Matlab console (inside the /Matlab directory). 
+Important: you will have to restart Matlab afterwards, otherwise the mex 
+interface will still not work. 
+
+For the brisk mex function, the following calling syntax applies:
+
+    varargout = brisk(subfunction, morevarargin)
+
+      where subfunction is to be used in order:
+
+      'init'      Initialize brisk. Optionally pass arguments to 
+                  set properties (see below). 
+                  Attention: this will create the pattern look-up table,
+                  so this may take some fraction of a second. 
+                  Do not rerun!
+
+      'set'       Set properties. The following may be set:
+                  '-threshold'    FAST/AGAST detection threshold.
+                                  The default value is 60.
+                  '-octaves'      No. octaves for the detection.
+                                  The default value is 4.
+                  '-patternScale' Scale factor for the BRISK pattern.
+                                  The default value is 1.0.
+                  '-type'         BRISK special type 'S', 'U', 'SU'.
+                                  By default, the standard BRISK is used.
+                                  See [1] for explanations on this.
+                  Attention: if the patternScale or the type is reset, 
+                  the pattern will be regenerated, which is time-
+                  consuming!
+
+      'loadImage' Load an image either from Matlab workspace by passing
+                  a UINT8 Matrix as a second argument, or by specifying 
+                  a path to an image, e.g.:
+                      brisk('loadImage',imread('path/to/image'));
+                      brisk('loadImage','path/to/image');
+
+      'detect'    Detect the keypoints. Optionally get the points back:
+                      brisk('detect');
+                      keyPoints=brisk('detect');
+
+      'describe'  Get the descriptors and the corresponding keypoints
+                      [keyPoints,descriptors]=brisk('detect');
+
+      'radiusMatch' Radius match.
+                      [indicesOfSecondKeyPoints]=brisk('radiusMatch',...
+                          firstKeypoints,secondKeyPoints);
+ 
+      'knnMatch'    k-nearest neighbor match.
+                      [indicesOfSecondKeyPoints]=brisk('knnMatch',...
+                          firstKeypoints,secondKeyPoints,k);
+
+      'image'     Returns the currently used gray-scale image.
+                      image=brisk('image');
+
+      'terminate' Free the memory.
+
+
+USING THE C++ LIBRARY
+=====================
+
+The respective interfaces comply with the OpenCV 2.2+ common feature 
+interface. As observable e.g. in the demo application, you will have the 
+following workflow representing the three stages detection, descriptor
+extraction and matching:
+
+// Set up the detector
+cv::Ptr<cv::FeatureDetector> detector;
+// select threshold and octaves at constructor level:
+detector = new cv::BriskFeatureDetector(60,4); 
+
+...
+
+// Construct the extractor. Make sure only to do this once: this will
+// build up the look-up tables, which is consuming a considerable amount 
+// of time.
+cv::Ptr<cv::DescriptorExtractor> descriptorExtractor;
+// constructor variants for arbitrary costumization available:
+descriptorExtractor = new cv::BriskDescriptorExtractor();
+
+...
+
+
+// Construct the matcher
+cv::Ptr<cv::DescriptorMatcher> descriptorMatcher;
+descriptorMatcher = new cv::BruteForceMatcher<cv::HammingSse>();
+
+...
+
+// process an arbitrary number of images:
+detector->detect(grayImage1,keypoints1);
+descriptorExtractor->compute(imgGray1,keypoints1,descriptors1);
+...
+detector->detect(grayImageN,keypointsN);
+descriptorExtractor->compute(imgGrayN,keypointsN,descriptorsN);
+...
+descriptorMatcher->radiusMatch(descriptorsI,descriptorsJ,
+		matches,hammingMax);
+// alternatively use knnMatch (or match for k:=1).
+...
