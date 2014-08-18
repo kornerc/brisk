@@ -17,10 +17,10 @@
        * Redistributions in binary form must reproduce the above copyright
          notice, this list of conditions and the following disclaimer in the
          documentation and/or other materials provided with the distribution.
-       * Neither the name of the ASL nor the names of its contributors may be 
-         used to endorse or promote products derived from this software without 
+       * Neither the name of the ASL nor the names of its contributors may be
+         used to endorse or promote products derived from this software without
          specific prior written permission.
-   
+
     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -50,6 +50,7 @@
 
 namespace cv{
 
+namespace brisk{
 // some helper structures for the Brisk pattern representation
 struct BriskPatternPoint{
 	float x;         // x coordinate relative to center
@@ -66,7 +67,7 @@ struct BriskLongPair{
 	int weighted_dx; // 1024.0/dx
 	int weighted_dy; // 1024.0/dy
 };
-
+}
 	// this is needed to avoid aliasing issues with the __m128i data type:
 #ifdef __GNUC__
 	typedef unsigned char __attribute__ ((__may_alias__)) UCHAR_ALIAS;
@@ -83,6 +84,7 @@ struct BriskLongPair{
 	#define __inline__ __forceinline
 #endif
 
+    namespace brisk{
 	class CV_EXPORTS BriskDescriptorExtractor : public cv::DescriptorExtractor{
 	public:
 		// create a descriptor with standard pattern
@@ -126,7 +128,7 @@ struct BriskLongPair{
 					const float key_y, const unsigned int scale,
 					const unsigned int rot, const unsigned int point) const;
 		// pattern properties
-		BriskPatternPoint* patternPoints_; 	//[i][rotation][scale]
+		brisk::BriskPatternPoint* patternPoints_; 	//[i][rotation][scale]
 		unsigned int points_; 				// total number of collocation points
 		float* scaleList_; 					// lists the scaling per scale index [scale]
 		unsigned int* sizeList_; 			// lists the total pattern size per scale index [scale]
@@ -138,14 +140,15 @@ struct BriskLongPair{
 		int strings_;						// number of uchars the descriptor consists of
 		float dMax_; 						// short pair maximum distance
 		float dMin_; 						// long pair maximum distance
-		BriskShortPair* shortPairs_; 		// d<_dMax
-		BriskLongPair* longPairs_; 			// d>_dMin
+		brisk::BriskShortPair* shortPairs_; 		// d<_dMax
+		brisk::BriskLongPair* longPairs_; 			// d>_dMin
 		unsigned int noShortPairs_; 		// number of shortParis
 		unsigned int noLongPairs_; 			// number of longParis
 
 		// general
 		static const float basicSize_;
 	};
+    }
 
 	/// Faster Hamming distance functor - uses sse
 	/// bit count of A exclusive XOR'ed with B
@@ -174,6 +177,7 @@ struct BriskLongPair{
 	    }
 	};
 
+    namespace brisk{
 	// a layer in the Brisk detector pyramid
 	class CV_EXPORTS BriskLayer
 	{
@@ -275,7 +279,7 @@ struct BriskLongPair{
 
 		// the image pyramids:
 		uint8_t layers_;
-		std::vector<cv::BriskLayer> pyramid_;
+		std::vector<BriskLayer> pyramid_;
 
 		// Agast:
 		uint8_t threshold_;
@@ -300,6 +304,7 @@ struct BriskLongPair{
 				std::vector<cv::KeyPoint>& keypoints,
 				const cv::Mat& mask=cv::Mat() ) const;
 	};
+    }
 }
 
 #include "hammingsse.hpp"

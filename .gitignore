@@ -8,3 +8,5 @@
 *.lib
 unix32/bin/demo
 unix64/bin/demo
+
+build

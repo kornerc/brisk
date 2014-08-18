@@ -17,10 +17,10 @@
        * Redistributions in binary form must reproduce the above copyright
          notice, this list of conditions and the following disclaimer in the
          documentation and/or other materials provided with the distribution.
-       * Neither the name of the ASL nor the names of its contributors may be 
-         used to endorse or promote products derived from this software without 
+       * Neither the name of the ASL nor the names of its contributors may be
+         used to endorse or promote products derived from this software without
          specific prior written permission.
-   
+
     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -93,7 +93,7 @@ int main(int argc, char ** argv) {
 	fextensions.push_back(".tiff");
 	fextensions.push_back(".tif");
 
-	// if no arguments are passed: 
+	// if no arguments are passed:
 	if(argc==1){
 		int i=0;
 		int fextensions_size=fextensions.size();
@@ -172,7 +172,7 @@ int main(int argc, char ** argv) {
 	// create the detector:
 	cv::Ptr<cv::FeatureDetector> detector;
 	if(argc==1){
-		detector = new cv::BriskFeatureDetector(60,4);
+		detector = new cv::brisk::BriskFeatureDetector(60,4);
 	}
 	else{
 		if(strncmp("FAST", argv[3], 4 )==0){
@@ -185,13 +185,13 @@ int main(int argc, char ** argv) {
 			threshold = atoi(argv[3]+5);
 			if(threshold==0)
 				threshold = 30;
-			detector = new cv::BriskFeatureDetector(threshold,0);
+			detector = new cv::brisk::BriskFeatureDetector(threshold,0);
 		}
 		else if(strncmp("BRISK", argv[3], 5 )==0){
 			threshold = atoi(argv[3]+5);
 			if(threshold==0)
 				threshold = 30;
-			detector = new cv::BriskFeatureDetector(threshold,4);
+			detector = new cv::brisk::BriskFeatureDetector(threshold,4);
 		}
 		/*else if(strncmp("SURF", argv[3], 4 )==0){
 			threshold = atoi(argv[3]+4);
@@ -276,20 +276,20 @@ int main(int argc, char ** argv) {
 	cv::Ptr<cv::DescriptorExtractor> descriptorExtractor;
 	// now the extractor:
 	if(argc==1){
-		descriptorExtractor = new cv::BriskDescriptorExtractor();
+		descriptorExtractor = new cv::brisk::BriskDescriptorExtractor();
 	}
 	else{
 		if(std::string(argv[4])=="BRISK"){
-			descriptorExtractor = new cv::BriskDescriptorExtractor();
+			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor();
 		}
 		else if(std::string(argv[4])=="U-BRISK"){
-			descriptorExtractor = new cv::BriskDescriptorExtractor(false);
+			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor(false);
 		}
 		else if(std::string(argv[4])=="SU-BRISK"){
-			descriptorExtractor = new cv::BriskDescriptorExtractor(false,false);
+			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor(false,false);
 		}
 		else if(std::string(argv[4])=="S-BRISK"){
-			descriptorExtractor = new cv::BriskDescriptorExtractor(true,false);
+			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor(true,false);
 		}
 		else if(std::string(argv[4])=="BRIEF"){
 			descriptorExtractor = new cv::BriefDescriptorExtractor(64);
@@ -337,7 +337,7 @@ int main(int argc, char ** argv) {
 	else
 		descriptorMatcher->radiusMatch(descriptors2,descriptors,matches,0.21);
 	cv::Mat outimg;
-	
+
 	// drawing
 	drawMatches(imgRGB2, keypoints2, imgRGB1, keypoints,matches,outimg,
 			 cv::Scalar(0,255,0), cv::Scalar(0,0,255),
