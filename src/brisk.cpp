@@ -614,7 +614,7 @@ void brisk::BriskScaleSpace::getKeypoints(const uint8_t _threshold, std::vector<
 				continue;
 
 			// let's do the subpixel and float scale refinement:
-			cv::brisk::BriskLayer& l=pyramid_[0];
+			brisk::BriskLayer& l=pyramid_[0];
 			register int s_0_0 = l.getAgastScore(point.x-1, point.y-1, 1);
 			register int s_1_0 = l.getAgastScore(point.x,   point.y-1, 1);
 			register int s_2_0 = l.getAgastScore(point.x+1, point.y-1, 1);
@@ -639,7 +639,7 @@ void brisk::BriskScaleSpace::getKeypoints(const uint8_t _threshold, std::vector<
 
 	float x,y,scale,score;
 	for(uint8_t i = 0; i<layers_; i++){
-		cv::brisk::BriskLayer& l=pyramid_[i];
+		brisk::BriskLayer& l=pyramid_[i];
 		const int num=agastPoints[i].size();
 		if(i==layers_-1){
 			for(int n=0; n < num; n++){
@@ -706,7 +706,7 @@ void brisk::BriskScaleSpace::getKeypoints(const uint8_t _threshold, std::vector<
 __inline__ int brisk::BriskScaleSpace::getScoreAbove(const uint8_t layer,
 		const int x_layer, const int y_layer){
 	assert(layer<layers_-1);
-	cv::brisk::BriskLayer& l=pyramid_[layer+1];
+	brisk::BriskLayer& l=pyramid_[layer+1];
 	if(layer%2==0){ // octave
 		const int sixths_x=4*x_layer-1;
 		const int x_above=sixths_x/6;
@@ -742,7 +742,7 @@ __inline__ int brisk::BriskScaleSpace::getScoreAbove(const uint8_t layer,
 __inline__ int brisk::BriskScaleSpace::getScoreBelow(const uint8_t layer,
 		const int x_layer, const int y_layer){
 	assert(layer);
-	cv::brisk::BriskLayer& l=pyramid_[layer-1];
+	brisk::BriskLayer& l=pyramid_[layer-1];
 	int sixth_x;
 	int quarter_x;
 	float xf;

@@ -172,7 +172,7 @@ int main(int argc, char ** argv) {
 	// create the detector:
 	cv::Ptr<cv::FeatureDetector> detector;
 	if(argc==1){
-		detector = new cv::brisk::BriskFeatureDetector(60,4);
+		detector = new brisk::BriskFeatureDetector(60,4);
 	}
 	else{
 		if(strncmp("FAST", argv[3], 4 )==0){
@@ -185,13 +185,13 @@ int main(int argc, char ** argv) {
 			threshold = atoi(argv[3]+5);
 			if(threshold==0)
 				threshold = 30;
-			detector = new cv::brisk::BriskFeatureDetector(threshold,0);
+			detector = new brisk::BriskFeatureDetector(threshold,0);
 		}
 		else if(strncmp("BRISK", argv[3], 5 )==0){
 			threshold = atoi(argv[3]+5);
 			if(threshold==0)
 				threshold = 30;
-			detector = new cv::brisk::BriskFeatureDetector(threshold,4);
+			detector = new brisk::BriskFeatureDetector(threshold,4);
 		}
 		/*else if(strncmp("SURF", argv[3], 4 )==0){
 			threshold = atoi(argv[3]+4);
@@ -276,20 +276,20 @@ int main(int argc, char ** argv) {
 	cv::Ptr<cv::DescriptorExtractor> descriptorExtractor;
 	// now the extractor:
 	if(argc==1){
-		descriptorExtractor = new cv::brisk::BriskDescriptorExtractor();
+		descriptorExtractor = new brisk::BriskDescriptorExtractor();
 	}
 	else{
 		if(std::string(argv[4])=="BRISK"){
-			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor();
+			descriptorExtractor = new brisk::BriskDescriptorExtractor();
 		}
 		else if(std::string(argv[4])=="U-BRISK"){
-			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor(false);
+			descriptorExtractor = new brisk::BriskDescriptorExtractor(false);
 		}
 		else if(std::string(argv[4])=="SU-BRISK"){
-			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor(false,false);
+			descriptorExtractor = new brisk::BriskDescriptorExtractor(false,false);
 		}
 		else if(std::string(argv[4])=="S-BRISK"){
-			descriptorExtractor = new cv::brisk::BriskDescriptorExtractor(true,false);
+			descriptorExtractor = new brisk::BriskDescriptorExtractor(true,false);
 		}
 		else if(std::string(argv[4])=="BRIEF"){
 			descriptorExtractor = new cv::BriefDescriptorExtractor(64);
