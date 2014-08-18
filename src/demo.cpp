@@ -193,7 +193,7 @@ int main(int argc, char ** argv) {
 				threshold = 30;
 			detector = new cv::BriskFeatureDetector(threshold,4);
 		}
-		else if(strncmp("SURF", argv[3], 4 )==0){
+		/*else if(strncmp("SURF", argv[3], 4 )==0){
 			threshold = atoi(argv[3]+4);
 			if(threshold==0)
 				threshold = 400;
@@ -205,7 +205,7 @@ int main(int argc, char ** argv) {
 			if(edgeThreshold==0)
 				thresh = 10.0;
 			detector = new cv::SiftFeatureDetector(thresh,edgeThreshold);
-		}
+		}*/
 		else{
 			detector = cv::FeatureDetector::create( argv[3] );
 		}
@@ -294,7 +294,7 @@ int main(int argc, char ** argv) {
 		else if(std::string(argv[4])=="BRIEF"){
 			descriptorExtractor = new cv::BriefDescriptorExtractor(64);
 		}
-		else if(std::string(argv[4])=="CALONDER"){
+		/*else if(std::string(argv[4])=="CALONDER"){
 			descriptorExtractor = new cv::CalonderDescriptorExtractor<float>("current.rtc");
 			hamming=false;
 		}
@@ -305,7 +305,7 @@ int main(int argc, char ** argv) {
 		else if(std::string(argv[4])=="SIFT"){
 			descriptorExtractor = new cv::SiftDescriptorExtractor();
 			hamming=false;
-		}
+		}*/
 		else{
 			descriptorExtractor = cv::DescriptorExtractor::create( argv[4] );
 		}
@@ -328,9 +328,10 @@ int main(int argc, char ** argv) {
 	std::vector<std::vector<cv::DMatch> > matches;
 	cv::Ptr<cv::DescriptorMatcher> descriptorMatcher;
 	if(hamming)
-		descriptorMatcher = new cv::BruteForceMatcher<cv::HammingSse>();
+		//descriptorMatcher = new cv::BruteForceMatcher<cv::HammingSse>();
+        descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
 	else
-		descriptorMatcher = new cv::BruteForceMatcher<cv::L2<float> >();
+		descriptorMatcher = new cv::BFMatcher();
 	if(hamming)
 		descriptorMatcher->radiusMatch(descriptors2,descriptors,matches,100.0);
 	else
