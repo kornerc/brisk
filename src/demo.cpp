@@ -98,8 +98,8 @@ int main(int argc, char ** argv) {
 		int i=0;
 		int fextensions_size=fextensions.size();
 		while(imgRGB1.empty()||imgRGB2.empty()){
-			fname1 = "../../images/img1"+fextensions[i];
-			fname2 = "../../images/img2"+fextensions[i];
+			fname1 = "../res/images/img1"+fextensions[i];
+			fname2 = "../res/images/img2"+fextensions[i];
 			imgRGB1 = cv::imread(fname1);
 			imgRGB2 = cv::imread(fname2);
 			i++;

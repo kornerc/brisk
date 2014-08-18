@@ -8,5 +8,13 @@
 *.lib
 unix32/bin/demo
 unix64/bin/demo
+Makefile
+
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
+thirdparty/agast/CMakeFiles
+thirdparty/agast/cmake_install.cmake
 
 build
+res

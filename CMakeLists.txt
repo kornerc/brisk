@@ -24,6 +24,9 @@ link_directories(${OpenCV_LIB_DIR})
 add_library(brisk src/brisk.cpp include/brisk/brisk.h)
 target_link_libraries(brisk agast_static ${OpenCV_LIBS})
 
-
+# brisk-demo
 add_executable(demo src/demo.cpp)
 target_link_libraries(demo brisk agast_static ${SPEC_OPENCV_LIBS})
+
+add_custom_command(TARGET demo PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+${CMAKE_SOURCE_DIR}/images ${PROJECT_BINARY_DIR}/res/images)
