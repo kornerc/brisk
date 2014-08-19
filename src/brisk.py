@@ -4,8 +4,8 @@ import numpy as np
 import cv2
 import numpy as np
 
-def get_keypoints(img):
-    kp_array = pybrisk.detect(img)
+def get_keypoints(img, thresh=60, octaves=4):
+    kp_array = pybrisk.detect(img, thresh, octaves)
     kp = []
     for i in range(kp_array.shape[0]):
         kp.append(cv2.KeyPoint())

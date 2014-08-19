@@ -7,13 +7,18 @@
 
 namespace py = boost::python;
 
-PyObject* detect(PyObject *img)
+PyObject* detect(PyObject *img, PyObject *thresh_py, PyObject *octaves_py)
 {
     NDArrayConverter cvt;
+    int thresh;
+    int octaves;
 
     cv::Mat img_rgb = cvt.toMat(img);
     cv::Ptr<cv::FeatureDetector> detector;
-    detector = new brisk::BriskFeatureDetector(60, 4);
+
+    PyArg_Parse(thresh_py, "i", &thresh);
+    PyArg_Parse(octaves_py, "i", &octaves);
+    detector = new brisk::BriskFeatureDetector(thresh, octaves);
 
     cv::Mat img_gray;
     cv::cvtColor(img_rgb, img_gray, CV_BGR2GRAY);
