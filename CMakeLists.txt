@@ -12,7 +12,7 @@ endif()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-add_definitions(-msse2 -mssse3)
+add_definitions(-msse2 -mssse3 -fPIC)
 
 option(BUILD_PYTHON_BINDING "Build the Python binding" ON)
 
@@ -64,4 +64,3 @@ if(BUILD_PYTHON_BINDING)
     add_custom_command(TARGET pybrisk PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy
                        ${CMAKE_SOURCE_DIR}/src/brisk.py $<TARGET_FILE_DIR:pybrisk>)
 endif()
-
