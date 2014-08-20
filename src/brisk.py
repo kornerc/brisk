@@ -1,29 +1,16 @@
 
 import pybrisk
-import numpy as np
-import cv2
-import numpy as np
 
-def get_keypoints(img, thresh=60, octaves=4):
-    kp_array = pybrisk.detect(img, thresh, octaves)
-    kp = []
-    for i in range(kp_array.shape[0]):
-        kp.append(cv2.KeyPoint())
-        kp[i].pt = (kp_array[i, 0], kp_array[i, 1])
-        kp[i].size = kp_array[i, 2]
-        kp[i].angle = kp_array[i, 3]
-        kp[i].response = kp_array[i, 4]
-    return kp, kp_array
+class Brisk:
+    def __init__(self):
+        self.descriptor_extractor = pybrisk.create()
 
-def get_features(img, kp_array):
-    features_and_kp = pybrisk.compute(img, kp_array)
-    kp_array_new = features_and_kp[0]
-    features = features_and_kp[1]
-    kp = []
-    for i in range(kp_array_new.shape[0]):
-        kp.append(cv2.KeyPoint())
-        kp[i].pt = (kp_array_new[i, 0], kp_array_new[i, 1])
-        kp[i].size = kp_array_new[i, 2]
-        kp[i].angle = kp_array_new[i, 3]
-        kp[i].response = kp_array_new[i, 4]
-    return kp, features
+    def __del__(self):
+        pybrisk.destroy(self.descriptor_extractor)
+
+    def detect_and_extract(self, img, thresh=60, octaves=4):
+        return pybrisk.detect_and_extract(self.descriptor_extractor,
+                img, thresh, octaves)
+
+    def detect_keypoints(self, img, thresh=60, octaves=4):
+        return pybrisk.detect_keypoints(img, thresh, octaves)

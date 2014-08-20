@@ -1,9 +1,13 @@
+#include <Python.h>
+
 #include <iostream>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <boost/python.hpp>
 
 #include "conversion.h"
 #include "brisk/brisk.h"
+
+#include <sys/time.h>
 
 namespace py = boost::python;
 
@@ -87,104 +91,37 @@ static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
     return ret_keypoints;
 }
 
-PyObject* old_detect(PyObject *img, PyObject *thresh_py, PyObject *octaves_py)
-{
-    NDArrayConverter cvt;
-    int thresh;
-    int octaves;
-
-    cv::Mat img_rgb = cvt.toMat(img);
-    cv::Ptr<cv::FeatureDetector> detector;
-
-    PyArg_Parse(thresh_py, "i", &thresh);
-    PyArg_Parse(octaves_py, "i", &octaves);
-    detector = new brisk::BriskFeatureDetector(thresh, octaves);
-
-    cv::Mat img_gray;
-    if (img_rgb.channels() == 1) {
-        img_gray = img_rgb;
-    } else {
-        cv::cvtColor(img_rgb, img_gray, CV_BGR2GRAY);
-    }
-
-    std::vector<cv::KeyPoint> keypoints;
-    detector->detect(img_gray, keypoints);
-
-    cv::Mat img_keypoints;
-
-    size_t num_keypoints = keypoints.size();
-    // [x, y, size, angle, response]
-    cv::Mat ret_keypoints(num_keypoints, 5, cv::DataType<float>::type);
-
-    for(size_t i = 0; i < num_keypoints; ++i)
-    {
-        ret_keypoints.at<float>(i, 0) = keypoints[i].pt.x;
-        ret_keypoints.at<float>(i, 1) = keypoints[i].pt.y;
-        ret_keypoints.at<float>(i, 2) = keypoints[i].size;
-        ret_keypoints.at<float>(i, 3) = keypoints[i].angle;
-        ret_keypoints.at<float>(i, 4) = keypoints[i].response;
-    }
-
-    PyObject* ret = cvt.toNDArray(ret_keypoints);
-    return ret;
+PyObject* create() {
+    cv::DescriptorExtractor* descriptor_extractor = new brisk::BriskDescriptorExtractor();
+    return PyCObject_FromVoidPtr(static_cast<void*>(descriptor_extractor), NULL);
 }
 
-PyObject* old_compute(PyObject *img, PyObject *keypoints)
-{
-    NDArrayConverter cvt;
-
-    cv::Mat img_rgb = cvt.toMat(img);
-    cv::Mat img_gray;
-    if (img_rgb.channels() == 1) {
-        img_gray = img_rgb;
-    } else {
-        cv::cvtColor(img_rgb, img_gray, CV_BGR2GRAY);
-    }
-
-    cv::Mat keypoints_array = cvt.toMat(keypoints);
-    PyObject* ret = PyList_New(2);
-    std::vector<cv::KeyPoint> keypoints_cv;
-
-    size_t num_keypoints = keypoints_array.rows;
-
-    for(size_t i = 0; i < num_keypoints; ++i)
-    {
-        cv::KeyPoint temp;
-        temp.pt.x = keypoints_array.at<float>(i, 0);
-        temp.pt.y = keypoints_array.at<float>(i, 1);
-        temp.size = keypoints_array.at<float>(i, 2);
-        temp.angle = keypoints_array.at<float>(i, 3);
-        temp.response = keypoints_array.at<float>(i, 4);
-        keypoints_cv.push_back(temp);
-    }
-
-    cv::Mat descriptors;
-    cv::Ptr<cv::DescriptorExtractor> descriptorExtractor;
-    descriptorExtractor = new brisk::BriskDescriptorExtractor();
-
-    descriptorExtractor->compute(img_gray, keypoints_cv, descriptors);
-
-    num_keypoints = keypoints_cv.size();
-    cv::Mat ret_keypoints(num_keypoints, 5, cv::DataType<float>::type);
-
-    for(size_t i = 0; i < num_keypoints; ++i)
-    {
-        ret_keypoints.at<float>(i, 0) = keypoints_cv[i].pt.x;
-        ret_keypoints.at<float>(i, 1) = keypoints_cv[i].pt.y;
-        ret_keypoints.at<float>(i, 2) = keypoints_cv[i].size;
-        ret_keypoints.at<float>(i, 3) = keypoints_cv[i].angle;
-        ret_keypoints.at<float>(i, 4) = keypoints_cv[i].response;
-    }
-
-    PyList_SetItem(ret, 0, cvt.toNDArray(ret_keypoints));
-    PyList_SetItem(ret, 1, cvt.toNDArray(descriptors));
-
-    return ret;
+void destroy(PyObject* p_descriptor_extractor) {
+    cv::DescriptorExtractor* descriptor_extractor =
+            static_cast<cv::DescriptorExtractor*>(PyCObject_AsVoidPtr(p_descriptor_extractor));
+    delete descriptor_extractor;
 }
 
 PyObject* detect_keypoints(PyObject *p_img, PyObject *p_thresh, PyObject *p_octaves) {
     cv::Mat img = get_gray_img(p_img);
     std::vector<cv::KeyPoint> keypoints = detect(img, p_thresh, p_octaves);
+
+    /*timeval t1, t2, t3;
+    double elapsedTime;
+
+    gettimeofday(&t1, NULL);
+    brisk::BriskDescriptorExtractor descriptorExtractor;
+    gettimeofday(&t2, NULL);
+    descriptorExtractor.computeAngles(img, keypoints);
+    gettimeofday(&t3, NULL);
+
+    elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;      // sec to ms
+    elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0;   // us to ms
+    std::cout << "constructor: " << elapsedTime << " ms.\n";
+
+    elapsedTime = (t3.tv_sec - t2.tv_sec) * 1000.0;      // sec to ms
+    elapsedTime += (t3.tv_usec - t2.tv_usec) / 1000.0;   // us to ms
+    std::cout << "angles: " << elapsedTime << " ms.\n";*/
 
     PyObject* ret_keypoints = keypoints_ctopy(keypoints);
 
@@ -209,16 +146,17 @@ void extract_features(PyObject *p_img, PyObject *p_keypoints) {
     PyObject* cv2_mod = PyImport_ImportModule("cv2");*/
 }
 
-PyObject* detect_and_extract(PyObject *p_img, PyObject *p_thresh, PyObject *p_octaves) {
+PyObject* detect_and_extract(PyObject* p_descriptor_extractor, PyObject *p_img,
+        PyObject *p_thresh, PyObject *p_octaves) {
     NDArrayConverter cvt;
 
     cv::Mat img = get_gray_img(p_img);
     std::vector<cv::KeyPoint> keypoints = detect(img, p_thresh, p_octaves);
 
     cv::Mat descriptors;
-    cv::Ptr<cv::DescriptorExtractor> descriptorExtractor;
-    descriptorExtractor = new brisk::BriskDescriptorExtractor();
-    descriptorExtractor->compute(img, keypoints, descriptors);
+    cv::DescriptorExtractor* descriptor_extractor =
+            static_cast<cv::DescriptorExtractor*>(PyCObject_AsVoidPtr(p_descriptor_extractor));
+    descriptor_extractor->compute(img, keypoints, descriptors);
 
     PyObject* ret = PyList_New(2);
     PyObject* ret_keypoints = keypoints_ctopy(keypoints);
@@ -237,8 +175,8 @@ static void init() {
 
 BOOST_PYTHON_MODULE(pybrisk) {
     init();
-    py::def("detect", old_detect);
-    py::def("compute", old_compute);
+    py::def("create", create);
+    py::def("destroy", destroy);
     py::def("detect_keypoints", detect_keypoints);
     py::def("extract_features", extract_features);
     py::def("detect_and_extract", detect_and_extract);
