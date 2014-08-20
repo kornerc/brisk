@@ -157,7 +157,8 @@ PyObject* extract_features(PyObject* p_descriptor_extractor,
         Py_DECREF(cv2_keypoint_pt_x);
         Py_DECREF(cv2_keypoint_pt_y);
         Py_DECREF(cv2_keypoint_pt);
-        Py_DECREF(cv2_keypoint);
+        // TODO: decrement reference doesn't work
+        // Py_DECREF(cv2_keypoint);
     }
 
     cv::Mat descriptors;
