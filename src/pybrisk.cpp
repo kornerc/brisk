@@ -125,16 +125,59 @@ PyObject* detect_keypoints_no_angles(PyObject *p_img, PyObject *p_thresh, PyObje
     return ret_keypoints;
 }
 
-void extract_features(PyObject *p_img, PyObject *p_keypoints) {
-    // TODO: implement function
-    // get image and conver if necessary
-    // Py_ssize_t num_keypoints = PyList_Size(p_keypoints);
+PyObject* extract_features(PyObject* p_descriptor_extractor,
+        PyObject *p_img, PyObject *p_keypoints) {
+    cv::Mat img = get_gray_img(p_img);
+    Py_ssize_t num_keypoints = PyList_Size(p_keypoints);
+
+    std::vector<cv::KeyPoint> keypoints;
+
+    for(Py_ssize_t i = 0; i < num_keypoints; ++i) {
+        keypoints.push_back(cv::KeyPoint());
+        PyObject* cv2_keypoint = PyList_GetItem(p_keypoints, i);
+
+        // get attributes
+        PyObject* cv2_keypoint_size = PyObject_GetAttrString(cv2_keypoint, "size");
+        PyObject* cv2_keypoint_angle = PyObject_GetAttrString(cv2_keypoint, "angle");
+        PyObject* cv2_keypoint_response = PyObject_GetAttrString(cv2_keypoint, "response");
+        PyObject* cv2_keypoint_pt = PyObject_GetAttrString(cv2_keypoint, "pt");
+        PyObject* cv2_keypoint_pt_x = PyTuple_GetItem(cv2_keypoint_pt, 0);
+        PyObject* cv2_keypoint_pt_y = PyTuple_GetItem(cv2_keypoint_pt, 1);
+
+        // set data
+        PyArg_Parse(cv2_keypoint_size, "f", &keypoints[i].size);
+        PyArg_Parse(cv2_keypoint_angle, "f", &keypoints[i].angle);
+        PyArg_Parse(cv2_keypoint_response, "f", &keypoints[i].response);
+        PyArg_Parse(cv2_keypoint_pt_x, "f", &keypoints[i].pt.x);
+        PyArg_Parse(cv2_keypoint_pt_y, "f", &keypoints[i].pt.y);
+
+        Py_DECREF(cv2_keypoint_size);
+        Py_DECREF(cv2_keypoint_angle);
+        Py_DECREF(cv2_keypoint_response);
+        Py_DECREF(cv2_keypoint_pt_x);
+        Py_DECREF(cv2_keypoint_pt_y);
+        Py_DECREF(cv2_keypoint_pt);
+        Py_DECREF(cv2_keypoint);
+    }
+
+    cv::Mat descriptors;
+    brisk::BriskDescriptorExtractor* descriptor_extractor =
+            static_cast<brisk::BriskDescriptorExtractor*>(PyCObject_AsVoidPtr(p_descriptor_extractor));
+    descriptor_extractor->compute(img, keypoints, descriptors);
+
+    NDArrayConverter cvt;
+    PyObject* ret = PyList_New(2);
+    PyObject* ret_keypoints = keypoints_ctopy(keypoints);
+    PyList_SetItem(ret, 0, ret_keypoints);
+    PyList_SetItem(ret, 1, cvt.toNDArray(descriptors));
+    // TODO: decrement reference doesn't work
+    // Py_DECREF(ret_keypoints);
+
+    return ret;
 }
 
 PyObject* detect_and_extract(PyObject* p_descriptor_extractor, PyObject *p_img,
         PyObject *p_thresh, PyObject *p_octaves) {
-    NDArrayConverter cvt;
-
     cv::Mat img = get_gray_img(p_img);
     std::vector<cv::KeyPoint> keypoints = detect(img, p_thresh, p_octaves);
 
@@ -143,6 +186,7 @@ PyObject* detect_and_extract(PyObject* p_descriptor_extractor, PyObject *p_img,
             static_cast<brisk::BriskDescriptorExtractor*>(PyCObject_AsVoidPtr(p_descriptor_extractor));
     descriptor_extractor->compute(img, keypoints, descriptors);
 
+    NDArrayConverter cvt;
     PyObject* ret = PyList_New(2);
     PyObject* ret_keypoints = keypoints_ctopy(keypoints);
     PyList_SetItem(ret, 0, ret_keypoints);

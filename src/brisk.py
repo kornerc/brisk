@@ -18,3 +18,7 @@ class Brisk:
 
     def detect_keypoints_no_angles(self, img, thresh=60, octaves=4):
         return pybrisk.detect_keypoints_no_angles(img, thresh, octaves)
+
+    def extract_features(self, img, keypoints):
+        return pybrisk.extract_features(self.descriptor_extractor,
+                img, keypoints)
