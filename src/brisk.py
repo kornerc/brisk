@@ -13,4 +13,8 @@ class Brisk:
                 img, thresh, octaves)
 
     def detect_keypoints(self, img, thresh=60, octaves=4):
-        return pybrisk.detect_keypoints(img, thresh, octaves)
+        return pybrisk.detect_keypoints(self.descriptor_extractor,
+                img, thresh, octaves)
+
+    def detect_keypoints_no_angles(self, img, thresh=60, octaves=4):
+        return pybrisk.detect_keypoints_no_angles(img, thresh, octaves)

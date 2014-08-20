@@ -365,6 +365,108 @@ bool RoiPredicate(const float minX, const float minY,
 	return (pt.x < minX) || (pt.x >= maxX) || (pt.y < minY) || (pt.y >= maxY);
 }
 
+void brisk::BriskDescriptorExtractor::computeAngles(const cv::Mat& image, std::vector<cv::KeyPoint>& keypoints) const{
+	//Remove keypoints very close to the border
+	size_t ksize=keypoints.size();
+	std::vector<int> kscales; // remember the scale per keypoint
+	kscales.resize(ksize);
+	static const float log2 = 0.693147180559945;
+	static const float lb_scalerange = log(scalerange_)/(log2);
+	std::vector<cv::KeyPoint>::iterator beginning = keypoints.begin();
+	std::vector<int>::iterator beginningkscales = kscales.begin();
+	static const float basicSize06=basicSize_*0.6;
+	unsigned int basicscale=0;
+	if(!scaleInvariance)
+		basicscale=std::max((int)(scales_/lb_scalerange*(log(1.45*basicSize_/(basicSize06))/log2)+0.5),0);
+	for(size_t k=0; k<ksize; k++){
+		unsigned int scale;
+		if(scaleInvariance){
+			scale=std::max((int)(scales_/lb_scalerange*(log(keypoints[k].size/(basicSize06))/log2)+0.5),0);
+			// saturate
+			if(scale>=scales_) scale = scales_-1;
+			kscales[k]=scale;
+		}
+		else{
+			scale = basicscale;
+			kscales[k]=scale;
+		}
+		const int border = sizeList_[scale];
+		const int border_x=image.cols-border;
+		const int border_y=image.rows-border;
+		if(RoiPredicate(border, border,border_x,border_y,keypoints[k])){
+			keypoints.erase(beginning+k);
+			kscales.erase(beginningkscales+k);
+			if(k==0){
+				beginning=keypoints.begin();
+				beginningkscales = kscales.begin();
+			}
+			ksize--;
+			k--;
+		}
+	}
+
+	// first, calculate the integral image over the whole image:
+	// current integral image
+	cv::Mat _integral; // the integral image
+	cv::integral(image, _integral);
+
+	int* _values=new int[points_]; // for temporary use
+
+	// now do the extraction for all keypoints:
+
+	// temporary variables containing gray values at sample points:
+	int t1;
+	int t2;
+
+	// the feature orientation
+	int direction0;
+	int direction1;
+
+	for(size_t k=0; k<ksize; k++){
+		int theta;
+		cv::KeyPoint& kp=keypoints[k];
+		const int& scale=kscales[k];
+		int shifter=0;
+		int* pvalues =_values;
+		const float& x=kp.pt.x;
+		const float& y=kp.pt.y;
+		if(true/*kp.angle==-1*/){
+			if (!rotationInvariance){
+				// don't compute the gradient direction, just assign a rotation of 0°
+				theta=0;
+			}
+			else{
+				// get the gray values in the unrotated pattern
+				for(unsigned int i = 0; i<points_; i++){
+					*(pvalues++)=smoothedIntensity(image, _integral, x,
+							y, scale, 0, i);
+				}
+
+				direction0=0;
+				direction1=0;
+				// now iterate through the long pairings
+				const brisk::BriskLongPair* max=longPairs_+noLongPairs_;
+				for(brisk::BriskLongPair* iter=longPairs_; iter<max; ++iter){
+					t1=*(_values+iter->i);
+					t2=*(_values+iter->j);
+					const int delta_t=(t1-t2);
+					// update the direction:
+					const int tmp0=delta_t*(iter->weighted_dx)/1024;
+					const int tmp1=delta_t*(iter->weighted_dy)/1024;
+					direction0+=tmp0;
+					direction1+=tmp1;
+				}
+				kp.angle=atan2((float)direction1,(float)direction0)/M_PI*180.0;
+				theta=int((n_rot_*kp.angle)/(360.0)+0.5);
+				if(theta<0)
+					theta+=n_rot_;
+				if(theta>=int(n_rot_))
+					theta-=n_rot_;
+			}
+		}
+	}
+}
+
 // computes the descriptor
 void brisk::BriskDescriptorExtractor::computeImpl(const Mat& image,
 		std::vector<KeyPoint>& keypoints, Mat& descriptors) const{

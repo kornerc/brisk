@@ -138,6 +138,8 @@ public:
 	bool rotationInvariance;
 	bool scaleInvariance;
 
+	virtual void computeAngles(const cv::Mat& image, std::vector<cv::KeyPoint>& keypoints) const;
+
 	// this is the subclass keypoint computation implementation: (not meant to be public - hacked)
 	virtual void computeImpl(const cv::Mat& image, std::vector<cv::KeyPoint>& keypoints,
 			cv::Mat& descriptors) const;
