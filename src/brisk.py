@@ -17,8 +17,8 @@ def get_keypoints(img, thresh=60, octaves=4):
 
 def get_features(img, kp_array):
     features_and_kp = pybrisk.compute(img, kp_array)
-    features = features_and_kp[0]
-    kp_array_new = features_and_kp[1]
+    kp_array_new = features_and_kp[0]
+    features = features_and_kp[1]
     kp = []
     for i in range(kp_array_new.shape[0]):
         kp.append(cv2.KeyPoint())

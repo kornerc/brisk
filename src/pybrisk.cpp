@@ -176,8 +176,8 @@ PyObject* old_compute(PyObject *img, PyObject *keypoints)
         ret_keypoints.at<float>(i, 4) = keypoints_cv[i].response;
     }
 
-    PyList_SetItem(ret, 0, cvt.toNDArray(descriptors));
-    PyList_SetItem(ret, 1, cvt.toNDArray(ret_keypoints));
+    PyList_SetItem(ret, 0, cvt.toNDArray(ret_keypoints));
+    PyList_SetItem(ret, 1, cvt.toNDArray(descriptors));
 
     return ret;
 }
@@ -222,8 +222,8 @@ PyObject* detect_and_extract(PyObject *p_img, PyObject *p_thresh, PyObject *p_oc
 
     PyObject* ret = PyList_New(2);
     PyObject* ret_keypoints = keypoints_ctopy(keypoints);
-    PyList_SetItem(ret, 0, cvt.toNDArray(descriptors));
-    PyList_SetItem(ret, 1, ret_keypoints);
+    PyList_SetItem(ret, 0, ret_keypoints);
+    PyList_SetItem(ret, 1, cvt.toNDArray(descriptors));
     // TODO: decrement reference doesn't work
     // Py_DECREF(ret_keypoints);
 
