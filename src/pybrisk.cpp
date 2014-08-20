@@ -21,7 +21,11 @@ PyObject* detect(PyObject *img, PyObject *thresh_py, PyObject *octaves_py)
     detector = new brisk::BriskFeatureDetector(thresh, octaves);
 
     cv::Mat img_gray;
-    cv::cvtColor(img_rgb, img_gray, CV_BGR2GRAY);
+    if (img_rgb.channels() == 1) {
+        img_gray = img_rgb;
+    } else {
+        cv::cvtColor(img_rgb, img_gray, CV_BGR2GRAY);
+    }
 
     std::vector<cv::KeyPoint> keypoints;
     detector->detect(img_gray, keypoints);
@@ -51,7 +55,11 @@ PyObject* compute(PyObject *img, PyObject *keypoints)
 
     cv::Mat img_rgb = cvt.toMat(img);
     cv::Mat img_gray;
-    cv::cvtColor(img_rgb, img_gray, CV_BGR2GRAY);
+    if (img_rgb.channels() == 1) {
+        img_gray = img_rgb;
+    } else {
+        cv::cvtColor(img_rgb, img_gray, CV_BGR2GRAY);
+    }
 
     cv::Mat keypoints_array = cvt.toMat(keypoints);
     PyObject* ret = PyList_New(2);
