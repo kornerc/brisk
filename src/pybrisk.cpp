@@ -11,8 +11,9 @@
 
 namespace py = boost::python;
 
+// TODO: fix feference counting and add documentation
+
 static cv::Mat get_gray_img(PyObject *p_img);
-static std::vector<cv::KeyPoint> detect(cv::Mat img, PyObject *p_thresh, PyObject *p_octaves);
 static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints);
 
 static cv::Mat get_gray_img(PyObject *p_img) {
@@ -27,22 +28,6 @@ static cv::Mat get_gray_img(PyObject *p_img) {
     }
 
     return img;
-}
-
-static std::vector<cv::KeyPoint> detect(cv::Mat img, PyObject *p_thresh, PyObject *p_octaves) {
-    // parse python arguments
-    int thresh;
-    int octaves;
-    PyArg_Parse(p_thresh, "i", &thresh);
-    PyArg_Parse(p_octaves, "i", &octaves);
-
-    // detect keypoints
-    cv::Ptr<cv::FeatureDetector> detector;
-    detector = new brisk::BriskFeatureDetector(thresh, octaves);
-    std::vector<cv::KeyPoint> keypoints;
-    detector->detect(img, keypoints);
-
-    return keypoints;
 }
 
 static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
@@ -102,10 +87,21 @@ void destroy(PyObject* p_descriptor_extractor) {
     delete descriptor_extractor;
 }
 
-PyObject* detect_keypoints(PyObject* p_descriptor_extractor, PyObject *p_img,
+PyObject* detect(PyObject* p_descriptor_extractor, PyObject *p_img,
         PyObject *p_thresh, PyObject *p_octaves) {
     cv::Mat img = get_gray_img(p_img);
-    std::vector<cv::KeyPoint> keypoints = detect(img, p_thresh, p_octaves);
+
+    // parse python arguments
+    int thresh;
+    int octaves;
+    PyArg_Parse(p_thresh, "i", &thresh);
+    PyArg_Parse(p_octaves, "i", &octaves);
+
+    // detect keypoints
+    cv::Ptr<cv::FeatureDetector> detector;
+    detector = new brisk::BriskFeatureDetector(thresh, octaves);
+    std::vector<cv::KeyPoint> keypoints;
+    detector->detect(img, keypoints);
 
     brisk::BriskDescriptorExtractor* descriptor_extractor =
             static_cast<brisk::BriskDescriptorExtractor*>(PyCObject_AsVoidPtr(p_descriptor_extractor));
@@ -116,16 +112,7 @@ PyObject* detect_keypoints(PyObject* p_descriptor_extractor, PyObject *p_img,
     return ret_keypoints;
 }
 
-PyObject* detect_keypoints_no_angles(PyObject *p_img, PyObject *p_thresh, PyObject *p_octaves) {
-    cv::Mat img = get_gray_img(p_img);
-    std::vector<cv::KeyPoint> keypoints = detect(img, p_thresh, p_octaves);
-
-    PyObject* ret_keypoints = keypoints_ctopy(keypoints);
-
-    return ret_keypoints;
-}
-
-PyObject* extract_features(PyObject* p_descriptor_extractor,
+PyObject* compute(PyObject* p_descriptor_extractor,
         PyObject *p_img, PyObject *p_keypoints) {
     cv::Mat img = get_gray_img(p_img);
     Py_ssize_t num_keypoints = PyList_Size(p_keypoints);
@@ -177,27 +164,6 @@ PyObject* extract_features(PyObject* p_descriptor_extractor,
     return ret;
 }
 
-PyObject* detect_and_extract(PyObject* p_descriptor_extractor, PyObject *p_img,
-        PyObject *p_thresh, PyObject *p_octaves) {
-    cv::Mat img = get_gray_img(p_img);
-    std::vector<cv::KeyPoint> keypoints = detect(img, p_thresh, p_octaves);
-
-    cv::Mat descriptors;
-    brisk::BriskDescriptorExtractor* descriptor_extractor =
-            static_cast<brisk::BriskDescriptorExtractor*>(PyCObject_AsVoidPtr(p_descriptor_extractor));
-    descriptor_extractor->compute(img, keypoints, descriptors);
-
-    NDArrayConverter cvt;
-    PyObject* ret = PyList_New(2);
-    PyObject* ret_keypoints = keypoints_ctopy(keypoints);
-    PyList_SetItem(ret, 0, ret_keypoints);
-    PyList_SetItem(ret, 1, cvt.toNDArray(descriptors));
-    // TODO: decrement reference doesn't work
-    // Py_DECREF(ret_keypoints);
-
-    return ret;
-}
-
 static void init() {
     Py_Initialize();
     import_array();
@@ -207,8 +173,6 @@ BOOST_PYTHON_MODULE(pybrisk) {
     init();
     py::def("create", create);
     py::def("destroy", destroy);
-    py::def("detect_keypoints", detect_keypoints);
-    py::def("detect_keypoints_no_angles", detect_keypoints_no_angles);
-    py::def("extract_features", extract_features);
-    py::def("detect_and_extract", detect_and_extract);
+    py::def("detect", detect);
+    py::def("compute", compute);
 }
