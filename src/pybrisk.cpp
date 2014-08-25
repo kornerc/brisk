@@ -35,10 +35,11 @@ static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
     PyObject* ret_keypoints = PyList_New(num_keypoints);
     // import cv2
     PyObject* cv2_mod = PyImport_ImportModule("cv2");
+    PyObject* cv2_keypoint_class = PyObject_GetAttrString(cv2_mod, "KeyPoint");
 
     for(size_t i = 0; i < num_keypoints; ++i) {
         // cv2_keypoint = cv2.KeyPoint()
-        PyObject* cv2_keypoint = PyObject_CallMethod(cv2_mod, const_cast<char*>("KeyPoint"), NULL);
+        PyObject* cv2_keypoint = PyObject_CallObject(cv2_keypoint_class, NULL);
 
         // build values
         PyObject* cv2_keypoint_size = Py_BuildValue("f", keypoints[i].size);
@@ -68,6 +69,7 @@ static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
     }
 
     Py_DECREF(cv2_mod);
+    Py_DECREF(cv2_keypoint_class);
 
     return ret_keypoints;
 }
