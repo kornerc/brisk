@@ -38,8 +38,7 @@ static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
 
     for(size_t i = 0; i < num_keypoints; ++i) {
         // cv2_keypoint = cv2.KeyPoint()
-        // TODO: PyInstance_New is maybe better
-        PyObject* cv2_keypoint = PyObject_CallMethod(cv2_mod, "KeyPoint", "");
+        PyObject* cv2_keypoint = PyObject_CallMethod(cv2_mod, const_cast<char*>("KeyPoint"), NULL);
 
         // build values
         PyObject* cv2_keypoint_size = Py_BuildValue("f", keypoints[i].size);
