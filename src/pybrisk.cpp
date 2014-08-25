@@ -11,7 +11,7 @@
 
 namespace py = boost::python;
 
-// TODO: fix feference counting and add documentation
+// TODO: add documentation
 
 static cv::Mat get_gray_img(PyObject *p_img);
 static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints);
@@ -39,7 +39,6 @@ static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
     for(size_t i = 0; i < num_keypoints; ++i) {
         // cv2_keypoint = cv2.KeyPoint()
         // TODO: PyInstance_New is maybe better
-        // cv2_keypoint has maybe a memory leak
         PyObject* cv2_keypoint = PyObject_CallMethod(cv2_mod, "KeyPoint", "");
 
         // build values
@@ -66,8 +65,6 @@ static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
         Py_DECREF(cv2_keypoint_size);
         Py_DECREF(cv2_keypoint_angle);
         Py_DECREF(cv2_keypoint_response);
-        Py_DECREF(cv2_keypoint_pt_x);
-        Py_DECREF(cv2_keypoint_pt_y);
         Py_DECREF(cv2_keypoint_pt);
     }
 
@@ -141,11 +138,7 @@ PyObject* compute(PyObject* p_descriptor_extractor,
         Py_DECREF(cv2_keypoint_size);
         Py_DECREF(cv2_keypoint_angle);
         Py_DECREF(cv2_keypoint_response);
-        Py_DECREF(cv2_keypoint_pt_x);
-        Py_DECREF(cv2_keypoint_pt_y);
         Py_DECREF(cv2_keypoint_pt);
-        // TODO: decrement reference doesn't work
-        // Py_DECREF(cv2_keypoint);
     }
 
     cv::Mat descriptors;
@@ -155,11 +148,8 @@ PyObject* compute(PyObject* p_descriptor_extractor,
 
     NDArrayConverter cvt;
     PyObject* ret = PyList_New(2);
-    PyObject* ret_keypoints = keypoints_ctopy(keypoints);
-    PyList_SetItem(ret, 0, ret_keypoints);
+    PyList_SetItem(ret, 0, keypoints_ctopy(keypoints));
     PyList_SetItem(ret, 1, cvt.toNDArray(descriptors));
-    // TODO: decrement reference doesn't work
-    // Py_DECREF(ret_keypoints);
 
     return ret;
 }
