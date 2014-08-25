@@ -2,14 +2,11 @@
 
 #include <iostream>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <boost/python.hpp>
 
 #include "conversion.h"
 #include "brisk/brisk.h"
 
 #include <sys/time.h>
-
-namespace py = boost::python;
 
 // TODO: add documentation
 
@@ -74,26 +71,35 @@ static PyObject* keypoints_ctopy(std::vector<cv::KeyPoint> keypoints) {
     return ret_keypoints;
 }
 
-PyObject* create() {
+static PyObject* create(PyObject* self, PyObject* args) {
     brisk::BriskDescriptorExtractor* descriptor_extractor = new brisk::BriskDescriptorExtractor();
     return PyCObject_FromVoidPtr(static_cast<void*>(descriptor_extractor), NULL);
 }
 
-void destroy(PyObject* p_descriptor_extractor) {
+static PyObject* destroy(PyObject* self, PyObject* args) {
+    PyObject* p_descriptor_extractor;
+    if(!PyArg_ParseTuple(args, "O", &p_descriptor_extractor)) {
+        return NULL;
+    }
+
     brisk::BriskDescriptorExtractor* descriptor_extractor =
             static_cast<brisk::BriskDescriptorExtractor*>(PyCObject_AsVoidPtr(p_descriptor_extractor));
     delete descriptor_extractor;
+
+    Py_RETURN_NONE;
 }
 
-PyObject* detect(PyObject* p_descriptor_extractor, PyObject *p_img,
-        PyObject *p_thresh, PyObject *p_octaves) {
-    cv::Mat img = get_gray_img(p_img);
-
-    // parse python arguments
+static PyObject* detect(PyObject* self, PyObject* args) {
+    PyObject* p_descriptor_extractor;
+    PyObject* p_img;
     int thresh;
     int octaves;
-    PyArg_Parse(p_thresh, "i", &thresh);
-    PyArg_Parse(p_octaves, "i", &octaves);
+    if(!PyArg_ParseTuple(args, "OOii", &p_descriptor_extractor, &p_img,
+            &thresh, &octaves)) {
+        return NULL;
+    }
+
+    cv::Mat img = get_gray_img(p_img);
 
     // detect keypoints
     cv::Ptr<cv::FeatureDetector> detector;
@@ -110,8 +116,15 @@ PyObject* detect(PyObject* p_descriptor_extractor, PyObject *p_img,
     return ret_keypoints;
 }
 
-PyObject* compute(PyObject* p_descriptor_extractor,
-        PyObject *p_img, PyObject *p_keypoints) {
+static PyObject* compute(PyObject* self, PyObject* args) {
+    PyObject* p_descriptor_extractor;
+    PyObject *p_img;
+    PyObject *p_keypoints;
+    if(!PyArg_ParseTuple(args, "OOO", &p_descriptor_extractor, &p_img,
+            &p_keypoints)) {
+        return NULL;
+    }
+
     cv::Mat img = get_gray_img(p_img);
     Py_ssize_t num_keypoints = PyList_Size(p_keypoints);
 
@@ -155,15 +168,15 @@ PyObject* compute(PyObject* p_descriptor_extractor,
     return ret;
 }
 
-static void init() {
-    Py_Initialize();
-    import_array();
-}
+static PyMethodDef brisk_methods[] = {
+     {"create", create,  METH_NOARGS, ""},
+     {"destroy", destroy,  METH_VARARGS, ""},
+     {"detect", detect,  METH_VARARGS, ""},
+     {"compute", compute,  METH_VARARGS, ""},
+     {NULL, NULL, 0, NULL}
+};
 
-BOOST_PYTHON_MODULE(pybrisk) {
-    init();
-    py::def("create", create);
-    py::def("destroy", destroy);
-    py::def("detect", detect);
-    py::def("compute", compute);
+PyMODINIT_FUNC
+initpybrisk() {
+    Py_InitModule("pybrisk", brisk_methods);
 }
