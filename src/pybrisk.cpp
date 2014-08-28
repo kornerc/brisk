@@ -161,9 +161,9 @@ static PyObject* compute(PyObject* self, PyObject* args) {
     descriptor_extractor->compute(img, keypoints, descriptors);
 
     NDArrayConverter cvt;
-    PyObject* ret = PyList_New(2);
-    PyList_SetItem(ret, 0, keypoints_ctopy(keypoints));
-    PyList_SetItem(ret, 1, cvt.toNDArray(descriptors));
+    PyObject* ret = PyTuple_New(2);
+    PyTuple_SetItem(ret, 0, keypoints_ctopy(keypoints));
+    PyTuple_SetItem(ret, 1, cvt.toNDArray(descriptors));
 
     return ret;
 }
